@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>六合彩高胜率公式挖掘与综合决策系统</title>
+  <style>
+    :root {
+      --primary: #007aff;
+      --primary-active: #0056b3;
+      --success: #34c759;
+      --warning: #ff9500;
+      --danger: #ff3b30;
+      --purple: #5856d6;
+      --bg: #f2f2f7;
+      --card-bg: #ffffff;
+      --border: #e5e5ea;
+      --text-main: #1c1c1e;
+      --text-sub: #8e8e93;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text-main); padding: 12px; }
+    
+    .card { background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    h2 { font-size: 16px; margin-bottom: 12px; color: var(--primary); display: flex; justify-content: space-between; align-items: center; }
+    
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #3a3a3c; }
+    textarea, select, input[type="text"] { width: 100%; padding: 10px; border: 1px solid #c7c7cc; border-radius: 8px; font-size: 13px; outline: none; transition: border-color 0.2s; background: #fff; }
+    textarea:focus, select:focus, input[type="text"]:focus { border-color: var(--primary); }
+    textarea { height: 90px; font-family: monospace; resize: vertical; }
+    
+    .btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: background-color 0.2s, opacity 0.2s; color: #fff; background: var(--primary); }
+    .btn:active { opacity: 0.8; }
+    .btn:disabled { background: #c7c7cc; cursor: not-allowed; opacity: 1; }
+    
+    .btn-mine { background: var(--warning); font-size: 16px; padding: 12px; }
+    .btn-secondary { background: var(--success); }
+    .btn-action { width: auto; padding: 4px 8px; font-size: 11px; border-radius: 4px; margin: 1px; }
+    .btn-copy { background: var(--success); }
+    .btn-save { background: var(--warning); }
+    .btn-del { background: var(--danger); }
+    .btn-verify { background: var(--success); font-size: 15px; padding: 10px; margin-bottom: 10px; }
+    
+    .res-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+    .res-table th, .res-table td { border-bottom: 1px solid var(--border); padding: 8px 6px; text-align: center; white-space: nowrap; }
+    .res-table th { background: #f9f9fb; font-weight: 600; color: #666; }
+    
+    .badge-rank { display: inline-block; width: 18px; height: 18px; line-height: 18px; border-radius: 50%; background: var(--border); color: #333; font-weight: bold; font-size: 11px; }
+    .rank-1 { background: #ffd700; color: #000; }
+    .rank-2 { background: #c0c0c0; color: #000; }
+    .rank-3 { background: #cd7f32; color: #fff; }
+    
+    .text-red { color: var(--danger); font-weight: bold; }
+    .text-green { color: var(--success); font-weight: bold; }
+    
+    .formula-code { 
+      font-family: monospace; 
+      font-weight: bold; 
+      color: var(--primary); 
+      text-align: left; 
+      white-space: nowrap; 
+      overflow-x: auto; 
+      max-width: 200px;
+      display: block;
+    }
+
+    .err-box { background: #ffe5e5; color: #d93025; border-radius: 6px; padding: 8px 12px; font-size: 12px; margin-top: 6px; line-height: 1.5; text-align: left; white-space: normal; }
+    .summary-card { background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; padding: 12px; font-size: 13px; margin-bottom: 12px; line-height: 1.6; }
+    .highlight-kill { color: var(--danger); font-size: 16px; font-weight: bold; margin: 0 4px; }
+    .kill-tag { display: inline-block; background: #fff0f0; color: var(--danger); border: 1px solid #ffccc7; padding: 2px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; margin: 2px; }
+    
+    .order-badge { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 2px; }
+    .badge-l { background: #e6f7ff; color: var(--primary); border: 1px solid #91d5ff; }
+    .badge-d { background: #f9f0ff; color: var(--purple); border: 1px solid #d3adf7; }
+
+    .collapsible-content { display: none; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+    .toggle-btn { background: none; border: none; color: var(--primary); font-size: 13px; cursor: pointer; }
+    .loading-status { display: none; text-align: center; margin-top: 10px; color: var(--primary); font-size: 13px; font-weight: bold; }
+
+    .cat-box { border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 12px; background: #fafafa; }
+    .cat-header { font-weight: bold; font-size: 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; color: var(--purple); }
+    
+    .formula-item-row { background: #fff; border: 1px solid var(--border); padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+    .formula-actions { display: flex; align-items: center; gap: 4px; }
+    .move-select { padding: 3px 4px; font-size: 11px; border-radius: 4px; border: 1px solid #ccc; background: #fff; width: auto; max-width: 100px; }
+
+    .stat-result-box { background: #1e1e1e; color: #4af626; font-family: "Courier New", monospace; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
+
+    /* 独立复制按钮提示样式 */
+    .btn-copy-area { background: var(--primary); color: #fff; padding: 3px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; }
+    .btn-copy-area.copied { background: var(--success); }
+
+    /* 自定义 UI 弹窗样式 */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: #fff; width: 85%; max-width: 320px; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    .modal-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; color: var(--text-main); }
+    .modal-body { font-size: 14px; color: #666; margin-bottom: 20px; line-height: 1.4; }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-btn { flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold; border: none; cursor: pointer; }
+    .modal-btn-cancel { background: #e5e5ea; color: #333; }
+    .modal-btn-confirm { background: var(--danger); color: #fff; }
+
+    #toast { visibility: hidden; min-width: 200px; background-color: rgba(0,0,0,0.8); color: #fff; text-align: center; border-radius: 8px; padding: 10px 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 13px; }
+    #toast.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 2.2s; }
+    @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+    @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+  </style>
+</head>
+<body>
+
+  <div id="toast">提示信息</div>
+
+  <!-- 自定义通用确认弹窗UI -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+      <div class="modal-title" id="modalTitle">二次确认</div>
+      <div class="modal-body" id="modalBody">确定要执行此操作吗？</div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</button>
+        <button class="modal-btn modal-btn-confirm" id="modalConfirmBtn">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. 基础配置 -->
+  <div class="card">
+    <h2>
+      <span>1. 基础配置</span>
+      <button class="toggle-btn" onclick="toggleSettings()">展开/收起 ⚙️</button>
+    </h2>
+    <div id="settingsPanel" class="collapsible-content">
+      <div class="form-group">
+        <label>12生肖配置：</label>
+        <textarea id="sxMapText">鼠: 07, 19, 31, 43
+牛: 06, 18, 30, 42
+虎: 05, 17, 29, 41
+兔: 04, 16, 28, 40
+龙: 03, 15, 27, 39
+蛇: 02, 14, 26, 38
+马: 01, 13, 25, 37, 49
+羊: 12, 24, 36, 48
+鸡: 10, 22, 34, 46
+猴: 11, 23, 35, 47
+狗: 09, 21, 33, 45
+猪: 08, 20, 32, 44</textarea>
+      </div>
+      <div class="form-group">
+        <label>波色配置：</label>
+        <textarea id="bxMapText" style="height:50px;">红波: 12, 13, 34, 35, 08, 24, 46, 01, 23, 30, 45, 02, 18, 19, 40, 07, 29
+蓝波: 04, 26, 42, 09, 25, 47, 14, 15, 31, 03, 10, 41, 48, 20, 36, 37
+绿波: 05, 27, 43, 16, 17, 38, 39, 22, 44, 11, 32, 33, 49, 06, 21, 28</textarea>
+      </div>
+      <div class="form-group">
+        <label>五行配置：</label>
+        <textarea id="wxMapText" style="height:50px;">金: 04, 05, 12, 13, 26, 27, 34, 35, 42, 43
+木: 08, 09, 16, 17, 24, 25, 38, 39, 46, 47
+水: 01, 14, 15, 22, 23, 30, 31, 44, 45
+火: 02, 03, 10, 11, 18, 19, 32, 33, 40, 41, 48, 49
+土: 06, 07, 20, 21, 28, 29, 36, 37</textarea>
+      </div>
+      <button class="btn btn-secondary" onclick="saveSettings()">保存基础设置</button>
+    </div>
+  </div>
+
+  <!-- 2. 历史数据输入 -->
+  <div class="card">
+    <h2>
+      <span>2. 历史开奖数据输入</span>
+      <div>
+        <button class="toggle-btn" onclick="resetDefaultHistory()">重置默认数据</button>
+      </div>
+    </h2>
+    <div class="form-group">
+      <textarea id="historyData" placeholder="例: 095, 15, 39, 01, 38, 21, 48, 35" oninput="saveHistoryData()"></textarea>
+      <div style="display:flex; gap:15px; align-items:center; margin-top:6px; font-size:13px;">
+        <label style="margin:0; font-weight:normal; cursor:pointer;"><input type="radio" name="orderType" value="L" checked> L序(落球)</label>
+        <label style="margin:0; font-weight:normal; cursor:pointer;"><input type="radio" name="orderType" value="D"> D序(大小排序)</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 单条测试 -->
+  <div class="card">
+    <h2>3. 自由输入公式测试与保存</h2>
+    <div class="form-group">
+      <input type="text" id="customFormula" placeholder="例：平4段+平3码+平4合尾+9">
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn" style="flex:1;" onclick="testSingleFormula()">🔍 验证单条</button>
+      <button class="btn" style="flex:1; background:var(--purple);" onclick="saveCustomFormula()">⭐ 保存至公式库</button>
+    </div>
+    <div id="singleResultBox" style="display:none; margin-top:10px;"></div>
+  </div>
+
+  <!-- 4. 自动挖掘 -->
+  <div class="card">
+    <h2>4. 批量自动挖掘与检验（纯加法深度版）</h2>
+    <div class="form-group">
+      <label>目标验证杀项</label>
+      <select id="killType">
+        <option value="shengxiao">杀肖 (逢12递减查肖)</option>
+        <option value="wei" selected>杀尾 (逢10递减取个位)</option>
+        <option value="he">杀合 (逢13递减取合)</option>
+        <option value="hang">杀行 (逢5递减取五行)</option>
+        <option value="tou">杀头 (逢5递减取0-4头)</option>
+        <option value="duan">杀段 (逢7递减取段)</option>
+        <option value="bose">杀波色 (逢49归一查波色)</option>
+      </select>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <div class="form-group" style="flex:1;">
+        <label>尝试组合数</label>
+        <select id="mineCount">
+          <option value="500">生成 500 条</option>
+          <option value="1000" selected>生成 1000 条</option>
+          <option value="2000">生成 2000 条</option>
+          <option value="3000">生成 3000 条</option>
+        </select>
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>显示排行榜</label>
+        <select id="topDisplayCount">
+          <option value="10">前 10 条</option>
+          <option value="20" selected>前 20 条</option>
+          <option value="30">前 30 条</option>
+          <option value="40">前 40 条</option>
+          <option value="50">前 50 条</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-mine" id="mineBtn" onclick="startMining()">🚀 一键挖掘深度➕高胜率公式</button>
+    <div id="loadingStatus" class="loading-status">⚡ 正在进行深度维度构建与多线程暴力挖掘中...</div>
+  </div>
+
+  <!-- 5. 挖掘结果展示 -->
+  <div class="card" id="resultCard" style="display:none;">
+    <h2>5. 下期挖掘杀项汇总与排行榜</h2>
+    <div id="killAnalyticsBox" class="summary-card"></div>
+    <div style="overflow-x:auto;">
+      <table class="res-table">
+        <thead>
+          <tr>
+            <th style="width:30px;">名次</th>
+            <th>公式表达式</th>
+            <th style="width:45px;">下期杀</th>
+            <th style="width:45px;">胜率</th>
+            <th style="width:40px;">连胜</th>
+            <th style="width:40px;">对/错</th>
+            <th style="width:85px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="rankingTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 6. 公式库管理 -->
+  <div class="card">
+    <h2>
+      <span>6. 我的公式库 (<span id="savedCount">0</span>)</span>
+      <div>
+        <button class="toggle-btn" style="color:var(--primary); margin-right:8px;" onclick="exportFormulas()">导出</button>
+        <button class="toggle-btn" style="color:var(--primary); margin-right:8px;" onclick="importFormulas()">导入</button>
+        <button class="toggle-btn" style="color:var(--danger); font-weight:bold;" onclick="clearAllSavedFormulas()">清空</button>
+      </div>
+    </h2>
+    <button class="btn btn-verify" onclick="verifySavedFormulas()">⚡ 基于最新开奖验证所有已存公式</button>
+    
+    <div id="savedAnalyticsBox" class="summary-card" style="display:none;"></div>
+
+    <div style="overflow-x:auto;">
+      <table class="res-table">
+        <thead>
+          <tr>
+            <th style="width:75px;">杀项/顺序</th>
+            <th>公式表达式</th>
+            <th style="width:50px;">下期杀</th>
+            <th style="width:45px;">胜率</th>
+            <th style="width:140px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="savedFormulasTbody">
+          <tr><td colspan="5" style="color:var(--text-sub); padding:15px;">暂无保存的公式，可在上方挖掘后点击“保存”</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 7. 自定义多公式区与在线统计 -->
+  <div class="card">
+    <h2>
+      <span>7. 自定义多公式区与在线统计</span>
+      <button class="btn btn-action btn-copy" style="font-size:12px; padding:4px 10px;" onclick="runCustomAreasAnalysis()">📊 运行在线统计</button>
+    </h2>
+    
+    <!-- 新增公式区面板 -->
+    <div style="background:#f9f9fb; padding:10px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px;">
+      <label style="margin-bottom:4px;">新建公式区：</label>
+      <div style="display:flex; gap:6px;">
+        <input type="text" id="areaNameInput" placeholder="例如: 杀头公式区">
+        <button class="btn" style="width:90px; font-size:12px; height:38px;" onclick="addNewArea()">新建分区</button>
+      </div>
+    </div>
+
+    <!-- 添加公式到指定区面板 -->
+    <div style="background:#f9f9fb; padding:10px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px;">
+      <label style="margin-bottom:4px;">添加公式到指定分区：</label>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px;">
+        <select id="targetAreaSelect"></select>
+        <input type="text" id="formulaNameInput" placeholder="公式别名(如: 杀头1号)">
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px;">
+        <select id="areaKillType">
+          <option value="tou">杀头 (逢5递减取0-4头)</option>
+          <option value="shengxiao">杀肖 (逢12递减查肖)</option>
+          <option value="wei">杀尾 (逢10递减取个位)</option>
+          <option value="he">杀合 (逢13递减取合)</option>
+          <option value="hang">杀行 (逢5递减取五行)</option>
+          <option value="duan">杀段 (逢7递减取段)</option>
+          <option value="bose">杀波色 (逢49归一查波色)</option>
+        </select>
+        <select id="areaOrderType">
+          <option value="L">L序(落球)</option>
+          <option value="D">D序(大小排序)</option>
+        </select>
+      </div>
+      <input type="text" id="formulaExprInput" placeholder="公式表达式(如: 平1段+平3码+平4合尾+9)" style="margin-bottom:6px;">
+      <button class="btn btn-secondary" onclick="addFormulaToArea()">添加公式到该区</button>
+    </div>
+
+    <!-- 分区展示容器 -->
+    <div id="areasContainer"></div>
+  </div>
+
+  <!-- 多线程 Worker 脚本 -->
+  <script id="workerScript" type="text/javascript">
+    self.onmessage = function(e) {
+      const { formulaPool, data, killType, mappings, topDisplayCount } = e.data;
+
+      function reduceBy(val, step) {
+        let v = Math.abs(val);
+        if (v === 0) return step;
+        while (v > step) { v -= step; }
+        return v;
+      }
+
+      function compileFormula(formulaStr) {
+        let f = formulaStr.replace(/\s+/g, '');
+        const replaceRules = [
+          ['平1合尾', 'p[0].hewei'], ['平1肖位', 'p[0].xw'], ['平1码位', 'p[0].xw'], ['平1行位', 'p[0].hw'], ['平1尾', 'p[0].wei'], ['平1段', 'p[0].duan'], ['平1头', 'p[0].tou'], ['平1合', 'p[0].he'], ['平1行', 'p[0].hw'], ['平1码', 'p[0].code'], ['平1肖', 'p[0].xw'], ['平1', 'p[0].code'],
+          ['平2合尾', 'p[1].hewei'], ['平2肖位', 'p[1].xw'], ['平2码位', 'p[1].xw'], ['平2行位', 'p[1].hw'], ['平2尾', 'p[1].wei'], ['平2段', 'p[1].duan'], ['平2头', 'p[1].tou'], ['平2合', 'p[1].he'], ['平2行', 'p[1].hw'], ['平2码', 'p[1].code'], ['平2肖', 'p[1].xw'], ['平2', 'p[1].code'],
+          ['平3合尾', 'p[2].hewei'], ['平3肖位', 'p[2].xw'], ['平3码位', 'p[2].xw'], ['平3行位', 'p[2].hw'], ['平3尾', 'p[2].wei'], ['平3段', 'p[2].duan'], ['平3头', 'p[2].tou'], ['平3合', 'p[2].he'], ['平3行', 'p[2].hw'], ['平3码', 'p[2].code'], ['平3肖', 'p[2].xw'], ['平3', 'p[2].code'],
+          ['平4合尾', 'p[3].hewei'], ['平4肖位', 'p[3].xw'], ['平4码位', 'p[3].xw'], ['平4行位', 'p[3].hw'], ['平4尾', 'p[3].wei'], ['平4段', 'p[3].duan'], ['平4头', 'p[3].tou'], ['平4合', 'p[3].he'], ['平4行', 'p[3].hw'], ['平4码', 'p[3].code'], ['平4肖', 'p[3].xw'], ['平4', 'p[3].code'],
+          ['平5合尾', 'p[4].hewei'], ['平5肖位', 'p[4].xw'], ['平5码位', 'p[4].xw'], ['平5行位', 'p[4].hw'], ['平5尾', 'p[4].wei'], ['平5段', 'p[4].duan'], ['平5头', 'p[4].tou'], ['平5合', 'p[4].he'], ['平5行', 'p[4].hw'], ['平5码', 'p[4].code'], ['平5肖', 'p[4].xw'], ['平5', 'p[4].code'],
+          ['平6合尾', 'p[5].hewei'], ['平6肖位', 'p[5].xw'], ['平6码位', 'p[5].xw'], ['平6行位', 'p[5].hw'], ['平6尾', 'p[5].wei'], ['平6段', 'p[5].duan'], ['平6头', 'p[5].tou'], ['平6合', 'p[5].he'], ['平6行', 'p[5].hw'], ['平6码', 'p[5].code'], ['平6肖', 'p[5].xw'], ['平6', 'p[5].code'],
+          ['特码合尾', 't.hewei'], ['特合尾', 't.hewei'], ['特肖位', 't.xw'], ['特码位', 't.xw'], ['特行位', 't.hw'], ['特码合', 't.he'], ['特尾', 't.wei'], ['特段', 't.duan'], ['特头', 't.tou'], ['特合', 't.he'], ['特行', 't.hw'], ['特码', 't.code'], ['特肖', 't.xw'], ['特', 't.code'],
+          ['期尾', 'qiWei']
+        ];
+        replaceRules.forEach(([k, v]) => { f = f.split(k).join(v); });
+        try { return new Function('p', 't', 'qiWei', `return ${f};`); } catch(e) { return null; }
+      }
+
+      function getKillTarget(calcVal, killType, mappings) {
+        let roundedVal = Math.round(calcVal);
+        if (killType === 'shengxiao') {
+          let num = reduceBy(roundedVal, 12);
+          return mappings.numToSx[num] || mappings.sxKeys[0];
+        } else if (killType === 'wei') {
+          return (Math.abs(roundedVal) % 10) + '尾';
+        } else if (killType === 'he') {
+          return reduceBy(roundedVal, 13) + '合';
+        } else if (killType === 'hang') {
+          let targetVal = reduceBy(roundedVal, 5);
+          let hangNames = ["", "金", "木", "水", "火", "土"];
+          return (hangNames[targetVal] || "金") + "行";
+        } else if (killType === 'tou') {
+          return (Math.abs(roundedVal) % 5) + '头';
+        } else if (killType === 'duan') {
+          return reduceBy(roundedVal, 7) + '段';
+        } else if (killType === 'bose') {
+          let lookupNum = Math.abs(roundedVal);
+          while (lookupNum > 49) lookupNum -= 49;
+          if (lookupNum === 0) lookupNum = 49;
+          return mappings.numToBx[lookupNum] || mappings.bxKeys[0];
+        }
+      }
+
+      let results = [];
+      formulaPool.forEach(formulaStr => {
+        const evalFn = compileFormula(formulaStr);
+        if (!evalFn) return;
+
+        let wins = 0, losses = 0;
+        let errPeriods = [];
+        let maxStreak = 0, currentStreak = 0;
+        let lastPrediction = null;
+
+        for (let i = 0; i < data.length - 1; i++) {
+          const prev = data[i];
+          const cur = data[i + 1];
+          let calcVal;
+          try { calcVal = evalFn(prev.ping, prev.te, prev.period % 10); } catch(e) { continue; }
+
+          if (isNaN(calcVal)) continue;
+
+          let targetKill = getKillTarget(calcVal, killType, mappings);
+          let curTeAttr = (killType === 'shengxiao') ? cur.te.sx :
+                          (killType === 'wei') ? cur.te.wei + '尾' :
+                          (killType === 'he') ? cur.te.he + '合' :
+                          (killType === 'hang') ? cur.te.wx + '行' :
+                          (killType === 'tou') ? cur.te.tou + '头' :
+                          (killType === 'duan') ? cur.te.duan + '段' : cur.te.bx;
+
+          if (curTeAttr !== targetKill) {
+            wins++; currentStreak++;
+            if (currentStreak > maxStreak) maxStreak = currentStreak;
+          } else {
+            losses++; currentStreak = 0;
+            errPeriods.push(cur.period + '期');
+          }
+        }
+
+        const latestData = data[data.length - 1];
+        try {
+          const latestCalc = evalFn(latestData.ping, latestData.te, latestData.period % 10);
+          if (!isNaN(latestCalc)) lastPrediction = getKillTarget(latestCalc, killType, mappings);
+        } catch(e) {}
+
+        let total = wins + losses;
+        if (total > 0) {
+          let winRate = (wins / total) * 100;
+          results.push({ formulaStr, winRate, wins, losses, errPeriods, maxStreak, lastPrediction, total });
+        }
+      });
+
+      results.sort((a, b) => (b.winRate !== a.winRate) ? (b.winRate - a.winRate) : (b.wins - a.wins));
+      self.postMessage(results.slice(0, topDisplayCount));
+    };
+  </script>
+
+  <!-- 主业务 JavaScript 代码 -->
+  <script>
+    const DEFAULT_HISTORY = `095, 15, 39, 01, 38, 21, 48, 35
+094, 16, 25, 04, 28, 43, 38, 17
+093, 13, 18, 26, 47, 48, 04, 40
+092, 46, 42, 25, 47, 38, 19, 06`;
+
+    let currentTopList = [];
+
+    // 初始化已存公式分区数据
+    let customAreas = JSON.parse(localStorage.getItem('custom_formula_areas')) || [
+      {
+        id: 'area_1',
+        name: '杀头公式区',
+        formulas: [
+          { id: 'f_1', name: '杀头1号', expr: '平1段+平3码+9', killType: 'tou', orderType: 'L' }
+        ]
+      }
+    ];
+
+    window.onload = function() {
+      const savedHistory = localStorage.getItem('user_history_data');
+      document.getElementById('historyData').value = (savedHistory && savedHistory.trim()) ? savedHistory : DEFAULT_HISTORY;
+
+      ['sxMapText', 'wxMapText', 'bxMapText'].forEach(id => {
+        if (localStorage.getItem(id)) document.getElementById(id).value = localStorage.getItem(id);
+      });
+
+      renderSavedFormulas();
+      renderCustomAreas();
+    };
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.innerText = msg;
+      t.className = "show";
+      setTimeout(() => { t.className = t.className.replace("show", ""); }, 2500);
+    }
+
+    /* 兼容移动端浏览器的 Modal 弹窗逻辑 */
+    let onModalConfirmCallback = null;
+    function openConfirmModal(title, bodyText, onConfirm) {
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalBody').innerText = bodyText;
+      onModalConfirmCallback = onConfirm;
+      document.getElementById('confirmModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('confirmModal').classList.remove('active');
+      onModalConfirmCallback = null;
+    }
+
+    document.getElementById('modalConfirmBtn').onclick = function() {
+      if (onModalConfirmCallback) onModalConfirmCallback();
+      closeModal();
+    };
+
+    function saveHistoryData() { localStorage.setItem('user_history_data', document.getElementById('historyData').value); }
+
+    function resetDefaultHistory() {
+      openConfirmModal("恢复默认", "确定要恢复默认历史数据吗？", function() {
+        document.getElementById('historyData').value = DEFAULT_HISTORY;
+        saveHistoryData();
+        showToast("已重置默认数据");
+      });
+    }
+
+    function toggleSettings() {
+      const panel = document.getElementById('settingsPanel');
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function saveSettings() {
+      localStorage.setItem('sxMapText', document.getElementById('sxMapText').value);
+      localStorage.setItem('wxMapText', document.getElementById('wxMapText').value);
+      localStorage.setItem('bxMapText', document.getElementById('bxMapText').value);
+      showToast("基础设置保存成功！");
+    }
+
+    function getMappings() {
+      const parseTextToMap = (text) => {
+        let numMap = {}, keys = [];
+        text.split('\n').forEach(line => {
+          if (!line.includes(':')) return;
+          const [name, nums] = line.split(':');
+          const trimmedName = name.trim();
+          keys.push(trimmedName);
+          nums.split(/[,，\s]+/).map(n => parseInt(n, 10)).filter(n => !isNaN(n)).forEach(n => { numMap[n] = trimmedName; });
+        });
+        return { numMap, keys };
+      };
+
+      const sx = parseTextToMap(document.getElementById('sxMapText').value);
+      const wx = parseTextToMap(document.getElementById('wxMapText').value);
+      const bx = parseTextToMap(document.getElementById('bxMapText').value);
+
+      return { numToSx: sx.numMap, sxKeys: sx.keys, numToWx: wx.numMap, wxKeys: wx.keys, numToBx: bx.numMap, bxKeys: bx.keys };
+    }
+
+    function reduceBy(val, step) {
+      let v = Math.abs(val);
+      if (v === 0) return step;
+      while (v > step) { v -= step; }
+      return v;
+    }
+
+    function parseNum(num, mappings) {
+      const n = parseInt(num, 10);
+      const sx = mappings.numToSx[n] || mappings.sxKeys[0];
+      const wx = mappings.numToWx[n] || mappings.wxKeys[0];
+      const bx = mappings.numToBx[n] || mappings.bxKeys[0];
+      const sumDigit = Math.floor(n / 10) + (n % 10);
+
+      return {
+        code: n, wei: n % 10, duan: Math.ceil(n / 7), tou: Math.floor(n / 10),
+        he: reduceBy(sumDigit, 13), hewei: reduceBy(sumDigit, 13) % 10,
+        sx, wx, bx, xw: mappings.sxKeys.indexOf(sx) + 1, hw: mappings.wxKeys.indexOf(wx) + 1
+      };
+    }
+
+    function parseData(text, isD, mappings) {
+      const lines = text.trim().split('\n').reverse();
+      const list = [];
+      lines.forEach(line => {
+        if (!line.trim()) return;
+        const arr = line.split(/[,，\s]+/).map(n => parseInt(n, 10)).filter(n => !isNaN(n));
+        if (arr.length >= 8) {
+          const period = arr[0];
+          let pingRaw = arr.slice(1, 7);
+          const teRaw = arr[7];
+          if (isD) pingRaw.sort((a,b) => a - b);
+          list.push({ period, ping: pingRaw.map(n => parseNum(n, mappings)), te: parseNum(teRaw, mappings) });
+        }
+      });
+      return list;
+    }
+
+    function evalFormulaInClient(formulaStr, data, killType, mappings) {
+      let f = formulaStr.replace(/\s+/g, '');
+      const replaceRules = [
+        ['平1合尾', 'p[0].hewei'], ['平1肖位', 'p[0].xw'], ['平1码位', 'p[0].xw'], ['平1行位', 'p[0].hw'], ['平1尾', 'p[0].wei'], ['平1段', 'p[0].duan'], ['平1头', 'p[0].tou'], ['平1合', 'p[0].he'], ['平1行', 'p[0].hw'], ['平1码', 'p[0].code'], ['平1肖', 'p[0].xw'], ['平1', 'p[0].code'],
+        ['平2合尾', 'p[1].hewei'], ['平2肖位', 'p[1].xw'], ['平2码位', 'p[1].xw'], ['平2行位', 'p[1].hw'], ['平2尾', 'p[1].wei'], ['平2段', 'p[1].duan'], ['平2头', 'p[1].tou'], ['平2合', 'p[1].he'], ['平2行', 'p[1].hw'], ['平2码', 'p[1].code'], ['平2肖', 'p[1].xw'], ['平2', 'p[1].code'],
+        ['平3合尾', 'p[2].hewei'], ['平3肖位', 'p[2].xw'], ['平3码位', 'p[2].xw'], ['平3行位', 'p[2].hw'], ['平3尾', 'p[2].wei'], ['平3段', 'p[2].duan'], ['平3头', 'p[2].tou'], ['平3合', 'p[2].he'], ['平3行', 'p[2].hw'], ['平3码', 'p[2].code'], ['平3肖', 'p[2].xw'], ['平3', 'p[2].code'],
+        ['平4合尾', 'p[3].hewei'], ['平4肖位', 'p[3].xw'], ['平4码位', 'p[3].xw'], ['平4行位', 'p[3].hw'], ['平4尾', 'p[3].wei'], ['平4段', 'p[3].duan'], ['平4头', 'p[3].tou'], ['平4合', 'p[3].he'], ['平4行', 'p[3].hw'], ['平4码', 'p[3].code'], ['平4肖', 'p[3].xw'], ['平4', 'p[3].code'],
+        ['平5合尾', 'p[4].hewei'], ['平5肖位', 'p[4].xw'], ['平5码位', 'p[4].xw'], ['平5行位', 'p[4].hw'], ['平5尾', 'p[4].wei'], ['平5段', 'p[4].duan'], ['平5头', 'p[4].tou'], ['平5合', 'p[4].he'], ['平5行', 'p[4].hw'], ['平5码', 'p[4].code'], ['平5肖', 'p[4].xw'], ['平5', 'p[4].code'],
+        ['平6合尾', 'p[5].hewei'], ['平6肖位', 'p[5].xw'], ['平6码位', 'p[5].xw'], ['平6行位', 'p[5].hw'], ['平6尾', 'p[5].wei'], ['平6段', 'p[5].duan'], ['平6头', 'p[5].tou'], ['平6合', 'p[5].he'], ['平6行', 'p[5].hw'], ['平6码', 'p[5].code'], ['平6肖', 'p[5].xw'], ['平6', 'p[5].code'],
+        ['特码合尾', 't.hewei'], ['特合尾', 't.hewei'], ['特肖位', 't.xw'], ['特码位', 't.xw'], ['特行位', 't.hw'], ['特码合', 't.he'], ['特尾', 't.wei'], ['特段', 't.duan'], ['特头', 't.tou'], ['特合', 't.he'], ['特行', 't.hw'], ['特码', 't.code'], ['特肖', 't.xw'], ['特', 't.code'],
+        ['期尾', 'qiWei']
+      ];
+      replaceRules.forEach(([k, v]) => { f = f.split(k).join(v); });
+
+      let evalFn;
+      try { evalFn = new Function('p', 't', 'qiWei', `return ${f};`); } catch(e) { return null; }
+
+      function getKillTarget(calcVal, killType) {
+        let roundedVal = Math.round(calcVal);
+        if (killType === 'shengxiao') {
+          let num = reduceBy(roundedVal, 12);
+          return mappings.numToSx[num] || mappings.sxKeys[0];
+        } else if (killType === 'wei') {
+          return (Math.abs(roundedVal) % 10) + '尾';
+        } else if (killType === 'he') {
+          return reduceBy(roundedVal, 13) + '合';
+        } else if (killType === 'hang') {
+          let targetVal = reduceBy(roundedVal, 5);
+          let hangNames = ["", "金", "木", "水", "火", "土"];
+          return (hangNames[targetVal] || "金") + "行";
+        } else if (killType === 'tou') {
+          return (Math.abs(roundedVal) % 5) + '头';
+        } else if (killType === 'duan') {
+          return reduceBy(roundedVal, 7) + '段';
+        } else if (killType === 'bose') {
+          let lookupNum = Math.abs(roundedVal);
+          while (lookupNum > 49) lookupNum -= 49;
+          if (lookupNum === 0) lookupNum = 49;
+          return mappings.numToBx[lookupNum] || mappings.bxKeys[0];
+        }
+      }
+
+      let wins = 0, losses = 0;
+      let historyResults = [];
+
+      for (let i = 0; i < data.length - 1; i++) {
+        const prev = data[i];
+        const cur = data[i + 1];
+        let calcVal;
+        try { calcVal = evalFn(prev.ping, prev.te, prev.period % 10); } catch(e) { continue; }
+
+        if (isNaN(calcVal)) continue;
+
+        let targetKill = getKillTarget(calcVal, killType);
+        let curTeAttr = (killType === 'shengxiao') ? cur.te.sx :
+                        (killType === 'wei') ? cur.te.wei + '尾' :
+                        (killType === 'he') ? cur.te.he + '合' :
+                        (killType === 'hang') ? cur.te.wx + '行' :
+                        (killType === 'tou') ? cur.te.tou + '头' :
+                        (killType === 'duan') ? cur.te.duan + '段' : cur.te.bx;
+
+        let isCorrect = (curTeAttr !== targetKill);
+        if (isCorrect) wins++; else losses++;
+        historyResults.push({ targetKill, actual: curTeAttr, isCorrect });
+      }
+
+      let lastPrediction = null;
+      const latestData = data[data.length - 1];
+      try {
+        const latestCalc = evalFn(latestData.ping, latestData.te, latestData.period % 10);
+        if (!isNaN(latestCalc)) lastPrediction = getKillTarget(latestCalc, killType);
+      } catch(e) {}
+
+      let total = wins + losses;
+      let winRate = total > 0 ? (wins / total) * 100 : 0;
+      return { winRate, wins, losses, lastPrediction, historyResults };
+    }
+
+    function testSingleFormula() {
+      const formulaStr = document.getElementById('customFormula').value.trim();
+      const killType = document.getElementById('killType').value;
+      const isD = document.querySelector('input[name="orderType"]:checked').value === 'D';
+      const mappings = getMappings();
+      const data = parseData(document.getElementById('historyData').value, isD, mappings);
+      const resBox = document.getElementById('singleResultBox');
+
+      if (!formulaStr) { showToast("⚠️ 请输入公式"); return; }
+      if (data.length < 2) { showToast("⚠️ 历史开奖数据不足"); return; }
+
+      let res = evalFormulaInClient(formulaStr, data, killType, mappings);
+      if (!res || isNaN(res.winRate)) {
+        resBox.style.display = 'block';
+        resBox.innerHTML = `<div class="err-box">⚠️ 公式语法错误或包含无法解析的变量，请检查拼写。</div>`;
+        return;
+      }
+
+      resBox.style.display = 'block';
+      resBox.innerHTML = `
+        <div class="summary-card" style="margin:0;">
+          <b>单条公式测试结果：</b><br>
+          下期杀项预测：<span class="text-red">${res.lastPrediction || '-'}</span><br>
+          历史胜率：<span class="text-green">${res.winRate.toFixed(1)}%</span> (${res.wins}对 / ${res.losses}错)
+        </div>
+      `;
+    }
+
+    function verifySavedFormulas() {
+      let saved = JSON.parse(localStorage.getItem('my_formulas') || '[]');
+      if (saved.length === 0) { showToast("公式库为空"); return; }
+
+      const mappings = getMappings();
+      const rawText = document.getElementById('historyData').value;
+      const dataL = parseData(rawText, false, mappings);
+      const dataD = parseData(rawText, true, mappings);
+
+      if (dataL.length < 2) { showToast("⚠️ 历史开奖数据不足"); return; }
+
+      let countMap = {};
+
+      saved.forEach((item, idx) => {
+        let isD = item.orderType === 'D';
+        let targetData = isD ? dataD : dataL;
+        let res = evalFormulaInClient(item.formulaStr, targetData, item.killType, mappings);
+
+        let predEl = document.getElementById(`saved_pred_${idx}`);
+        let rateEl = document.getElementById(`saved_rate_${idx}`);
+
+        if (res && !isNaN(res.winRate)) {
+          if (predEl) predEl.innerHTML = `<span class="text-red">${res.lastPrediction || '-'}</span>`;
+          if (rateEl) rateEl.innerHTML = `<span class="text-green">${res.winRate.toFixed(1)}%</span>`;
+          if (res.lastPrediction) {
+            let key = `${getKillTypeName(item.killType)}:${res.lastPrediction}`;
+            countMap[key] = (countMap[key] || 0) + 1;
+          }
+        } else {
+          if (predEl) predEl.innerText = '错误';
+          if (rateEl) rateEl.innerText = '错误';
+        }
+      });
+
+      let analyticsBox = document.getElementById('savedAnalyticsBox');
+      analyticsBox.style.display = 'block';
+      let html = `<b>⭐ 已保存公式库 - 下期看杀热度汇总：</b><br>`;
+
+      let keys = Object.keys(countMap);
+      if (keys.length > 0) {
+        keys.forEach(k => {
+          let [ktName, val] = k.split(':');
+          html += `<span class="kill-tag">${ktName} - ${val}</span> 被杀 <b>${countMap[k]}</b> 次 &nbsp;|&nbsp; `;
+        });
+      } else {
+        html += `暂无有效看杀预测。`;
+      }
+      analyticsBox.innerHTML = html;
+      showToast("⚡ 公式库计算完成！");
+    }
+
+    function saveCustomFormula() {
+      let formulaStr = document.getElementById('customFormula').value.trim();
+      formulaStr = formulaStr.replace(/\s+/g, '');
+      const killType = document.getElementById('killType').value;
+      const orderType = document.querySelector('input[name="orderType"]:checked').value;
+      if (!formulaStr) { showToast("⚠️ 请输入公式内容"); return; }
+
+      let saved = JSON.parse(localStorage.getItem('my_formulas') || '[]');
+      if (saved.some(f => f.formulaStr === formulaStr && f.killType === killType && f.orderType === orderType)) {
+        showToast("⚠️ 该公式已存在于公式库");
+        return;
+      }
+
+      saved.push({ formulaStr, killType, orderType, addedAt: new Date().toLocaleDateString() });
+      localStorage.setItem('my_formulas', JSON.stringify(saved));
+      renderSavedFormulas();
+      showToast("⭐ 公式已保存！");
+    }
+
+    function saveSingleToLibrary(index) {
+      if (!currentTopList[index]) return;
+      const item = currentTopList[index];
+      const killType = document.getElementById('killType').value;
+      const orderType = document.querySelector('input[name="orderType"]:checked').value;
+
+      let saved = JSON.parse(localStorage.getItem('my_formulas') || '[]');
+      if (saved.some(f => f.formulaStr === item.formulaStr && f.killType === killType && f.orderType === orderType)) {
+        showToast("⚠️ 公式库已存在此项");
+        return;
+      }
+
+      saved.push({ formulaStr: item.formulaStr, killType, orderType, addedAt: new Date().toLocaleDateString() });
+      localStorage.setItem('my_formulas', JSON.stringify(saved));
+      renderSavedFormulas();
+      showToast("⭐ 已添加至公式库");
+    }
+
+    function saveAllTopList() {
+      if (!currentTopList.length) return;
+      const killType = document.getElementById('killType').value;
+      const orderType = document.querySelector('input[name="orderType"]:checked').value;
+      let saved = JSON.parse(localStorage.getItem('my_formulas') || '[]');
+      let addCount = 0;
+
+      currentTopList.forEach(item => {
+        if (!saved.some(f => f.formulaStr === item.formulaStr && f.killType === killType && f.orderType === orderType)) {
+          saved.push({ formulaStr: item.formulaStr, killType, orderType, addedAt: new Date().toLocaleDateString() });
+          addCount++;
+        }
+      });
+
+      localStorage.setItem('my_formulas', JSON.stringify(saved));
+      renderSavedFormulas();
+      showToast(`⭐ 已批量添加 ${addCount} 条公式`);
+    }
+
+    function deleteSavedFormula(idx) {
+      let saved = JSON.parse(localStorage.getItem('my_formulas') || '[]');
+      saved.splice(idx, 1);
+      localStorage.setItem('my_formulas', JSON.stringify(saved));
+      renderSavedFormulas();
+      showToast("已删除公式");
+    }
+
+    function clearAllSavedFormulas() {
+      openConfirmModal("清空确认", "确定要清空所有已保存的公式吗？", function() {
+        localStorage.removeItem('my_formulas');
+        document.getElementById('savedAnalyticsBox').style.display = 'none';
+        renderSavedFormulas();
+        showToast("已清空公式库");
+      });
+    }
+
+    function exportFormulas() {
+      let saved = localStorage.getItem('my_formulas') || '[]';
+      let blob = new Blob([saved], { type: 'application/json' });
+      let a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `my_formulas_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+    }
+
+    function importFormulas() {
+      let input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = e => {
+        let file = e.target.files[0];
+        let reader = new FileReader();
+        reader.onload = event => {
+          try {
+            let imported = JSON.parse(event.target.result);
+            if (Array.isArray(imported)) {
+              localStorage.setItem('my_formulas', JSON.stringify(imported));
+              renderSavedFormulas();
+              showToast("公式库导入成功！");
+            }
+          } catch(err) { showToast("⚠️ 文件格式非法"); }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+
+    function getKillTypeName(kt) {
+      const map = { shengxiao:'杀肖', wei:'杀尾', he:'杀合', hang:'杀行', tou:'杀头', duan:'杀段', bose:'杀波色' };
+      return map[kt] || '杀项';
+    }
+
+    function renderSavedFormulas() {
+      let saved = JSON.parse(localStorage.getItem('my_formulas') || '[]');
+      document.getElementById('savedCount').innerText = saved.length;
+      let tbody = document.getElementById('savedFormulasTbody');
+
+      if (saved.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-sub); padding:15px;">暂无保存的公式，可在上方挖掘后点击“保存”</td></tr>';
+        return;
+      }
+
+      let html = "";
+      saved.forEach((item, idx) => {
+        let orderType = item.orderType || 'L';
+        let badgeClass = orderType === 'D' ? 'badge-d' : 'badge-l';
+
+        let areaOptionsHtml = `<option value="" disabled selected>移动到分区...</option>`;
+        if (customAreas && customAreas.length > 0) {
+          customAreas.forEach(area => {
+            areaOptionsHtml += `<option value="${area.id}">${area.name}</option>`;
+          });
+        } else {
+          areaOptionsHtml += `<option value="" disabled>暂无分区(请新建)</option>`;
+        }
+
+        html += `
+          <tr>
+            <td>
+              <span class="text-green">${getKillTypeName(item.killType)}</span>
+              <span class="order-badge ${badgeClass}">${orderType}序</span>
+            </td>
+            <td><div class="formula-code">${item.formulaStr}</div></td>
+            <td id="saved_pred_${idx}">-</td>
+            <td id="saved_rate_${idx}">-</td>
+            <td>
+              <div style="display:flex; gap:4px; align-items:center; justify-content:center;">
+                <select class="move-select" onchange="moveLibraryFormulaToArea(${idx}, this.value)">
+                  ${areaOptionsHtml}
+                </select>
+                <button class="btn btn-action btn-copy" onclick="copyFormula('${item.formulaStr}')">复制</button>
+                <button class="btn btn-action btn-del" onclick="deleteSavedFormula(${idx})">删除</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function moveLibraryFormulaToArea(libIndex, targetAreaId) {
+      if (!targetAreaId) return;
+
+      let saved = JSON.parse(localStorage.getItem('my_formulas') || '[]');
+      if (!saved[libIndex]) return;
+
+      const targetArea = customAreas.find(a => a.id === targetAreaId);
+      if (!targetArea) {
+        showToast("⚠️ 未找到目标分区");
+        return;
+      }
+
+      const formulaToMove = saved[libIndex];
+
+      if (!targetArea.formulas) targetArea.formulas = [];
+      targetArea.formulas.push({
+        id: 'f_' + Date.now(),
+        name: getKillTypeName(formulaToMove.killType) + ' (来自公式库)',
+        killType: formulaToMove.killType,
+        orderType: formulaToMove.orderType || 'L',
+        expr: formulaToMove.formulaStr
+      });
+
+      saveCustomAreas();
+      renderCustomAreas();
+
+      saved.splice(libIndex, 1);
+      localStorage.setItem('my_formulas', JSON.stringify(saved));
+      renderSavedFormulas();
+
+      showToast(`已将公式移动至 [${targetArea.name}]`);
+    }
+
+    function startMining() {
+      const btn = document.getElementById('mineBtn');
+      const loading = document.getElementById('loadingStatus');
+      const mappings = getMappings();
+      const rawText = document.getElementById('historyData').value;
+      const isD = document.querySelector('input[name="orderType"]:checked').value === 'D';
+      const data = parseData(rawText, isD, mappings);
+      const killType = document.getElementById('killType').value;
+      const mineCount = parseInt(document.getElementById('mineCount').value, 10);
+      const topDisplayCount = parseInt(document.getElementById('topDisplayCount').value, 10);
+
+      if (data.length < 2) { showToast("⚠️ 历史开奖数据需至少2期！"); return; }
+
+      btn.disabled = true;
+      loading.style.display = 'block';
+
+      const formulaPool = generateFormulaPool(mineCount);
+      const blob = new Blob([document.getElementById('workerScript').textContent], { type: 'text/javascript' });
+      const worker = new Worker(URL.createObjectURL(blob));
+
+      worker.postMessage({ formulaPool, data, killType, mappings, topDisplayCount });
+
+      worker.onmessage = function(e) {
+        currentTopList = e.data;
+        renderResults(e.data, killType, topDisplayCount, isD ? 'D' : 'L');
+        btn.disabled = false;
+        loading.style.display = 'none';
+        worker.terminate();
+      };
+    }
+
+    function generateFormulaPool(count) {
+      const baseVars = ['平1', '平2', '平3', '平4', '平5', '平6', '特'];
+      const suffixes = ['码', '尾', '合', '段', '行', '头', '合尾', '肖'];
+      const constants = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 49];
+
+      let pool = new Set();
+      const eliteSeeds = [
+        "平1肖+平3合尾+平5行+特合尾+7",
+        "平2码+平4段+平6尾+特肖+平1合",
+        "平1行+平3头+平4尾+平5合尾+特码+12",
+        "平2尾+平3肖+平5段+平6行+特尾+3",
+        "平1段+平2合尾+平4行+平6肖+特头+9"
+      ];
+      eliteSeeds.forEach(s => pool.add(s));
+
+      let items = [];
+      baseVars.forEach(v => { suffixes.forEach(s => items.push(v + s)); });
+
+      while (pool.size < count) {
+        let length = Math.floor(Math.random() * 3) + 4; 
+        let selectedItems = new Set();
+        while (selectedItems.size < length) {
+          let randomItem = items[Math.floor(Math.random() * items.length)];
+          selectedItems.add(randomItem);
+        }
+        let formulaArray = Array.from(selectedItems);
+        if (Math.random() > 0.5) formulaArray.push("期尾");
+        if (Math.random() > 0.3) {
+          let randomConst = constants[Math.floor(Math.random() * constants.length)];
+          formulaArray.push(String(randomConst));
+        }
+        pool.add(formulaArray.join("+"));
+      }
+      return Array.from(pool);
+    }
+
+    function renderResults(topList, killType, topDisplayCount, orderType) {
+      let html = "";
+      let countMap = {};
+
+      topList.forEach((item, index) => {
+        let rankClass = index === 0 ? 'rank-1' : (index === 1 ? 'rank-2' : (index === 2 ? 'rank-3' : ''));
+        let errStr = item.errPeriods.length > 0 ? item.errPeriods.join(', ') : '无 (全对)';
+
+        if (item.lastPrediction) {
+          countMap[item.lastPrediction] = (countMap[item.lastPrediction] || 0) + 1;
+        }
+
+        html += `
+          <tr>
+            <td><span class="badge-rank ${rankClass}">${index + 1}</span></td>
+            <td><div class="formula-code">${item.formulaStr}</div></td>
+            <td><span class="text-red">${item.lastPrediction || '-'}</span></td>
+            <td class="text-green">${item.winRate.toFixed(1)}%</td>
+            <td><b>${item.maxStreak}期</b></td>
+            <td><span class="text-green">${item.wins}</span>/<span class="text-red">${item.losses}</span></td>
+            <td>
+              <button class="btn btn-action btn-save" onclick="saveSingleToLibrary(${index})">保存</button>
+              <button class="btn btn-action btn-copy" onclick="copyFormula('${item.formulaStr}')">复制</button>
+              <button class="btn btn-action" style="background:#8e8e93;" onclick="toggleErrRow(${index})">错期</button>
+            </td>
+          </tr>
+          <tr id="errRow_${index}" style="display:none; background:#fafafa;">
+            <td colspan="7">
+              <div class="err-box">
+                <b>💥 爆单错期汇总：</b><br>${errStr}
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      let sortedPredictions = Object.keys(countMap).sort((a,b) => countMap[b] - countMap[a]);
+      let killTypeName = getKillTypeName(killType);
+
+      let analyticsHtml = `<div style="display:flex; justify-space-between; align-items:center; margin-bottom:8px;">
+        <b>💡 下期公式杀【${killTypeName} (${orderType}序)】决策分析：</b>
+        <button class="btn btn-action btn-save" style="padding:4px 10px; font-size:12px;" onclick="saveAllTopList()">⭐ 一键保存 TOP ${topDisplayCount} 公式</button>
+      </div>`;
+
+      if (sortedPredictions.length > 0) {
+        let topKill = sortedPredictions[0];
+        let topCount = countMap[topKill];
+        
+        analyticsHtml += `🔥 杀得最多的${killTypeName}为：<span class="highlight-kill">${topKill}</span>（被 <b>${topCount}</b> 条 TOP ${topDisplayCount} 公式看杀）<br><br>`;
+        analyticsHtml += `📊 <b>看杀热度榜：</b><br>`;
+        
+        sortedPredictions.forEach(pred => {
+          analyticsHtml += `<span class="kill-tag">${pred}</span> 被杀 <b>${countMap[pred]}</b> 次 &nbsp;|&nbsp; `;
+        });
+      } else {
+        analyticsHtml += `暂无足够的下期预测数据。`;
+      }
+
+      document.getElementById('killAnalyticsBox').innerHTML = analyticsHtml;
+      document.getElementById('rankingTbody').innerHTML = html;
+      document.getElementById('resultCard').style.display = "block";
+    }
+
+    function copyFormula(str) {
+      navigator.clipboard.writeText(str).then(() => {
+        showToast("已复制公式至剪贴板");
+      }).catch(() => {
+        showToast("复制失败，请手动选择复制");
+      });
+    }
+
+    function toggleErrRow(idx) {
+      const el = document.getElementById('errRow_' + idx);
+      el.style.display = el.style.display === 'none' ? 'table-row' : 'none';
+    }
+
+    /* 7. 自定义公式区逻辑 */
+    function saveCustomAreas() {
+      localStorage.setItem('custom_formula_areas', JSON.stringify(customAreas));
+    }
+
+    function renderCustomAreas() {
+      const selectEl = document.getElementById('targetAreaSelect');
+      selectEl.innerHTML = '';
+      customAreas.forEach(area => {
+        const opt = document.createElement('option');
+        opt.value = area.id;
+        opt.innerText = area.name;
+        selectEl.appendChild(opt);
+      });
+
+      const container = document.getElementById('areasContainer');
+      container.innerHTML = '';
+
+      if (customAreas.length === 0) {
+        container.innerHTML = `<div style="text-align:center; color:#999; padding:20px; font-size:13px;">暂无公式分区，请在上方新建</div>`;
+        return;
+      }
+
+      customAreas.forEach(area => {
+        let formulasHtml = '';
+        if (area.formulas && area.formulas.length > 0) {
+          area.formulas.forEach(f => {
+            let moveOptionsHtml = `<option value="" disabled selected>移至其他区...</option>`;
+            customAreas.forEach(targetA => {
+              if (targetA.id !== area.id) {
+                moveOptionsHtml += `<option value="${targetA.id}">${targetA.name}</option>`;
+              }
+            });
+
+            formulasHtml += `
+              <div class="formula-item-row">
+                <div>
+                  <b>${f.name}</b> <span style="color:#666;">(${getKillTypeName(f.killType)} | ${f.orderType}序)</span>
+                  <div style="font-family:monospace; color:var(--primary); font-size:11px;">${f.expr}</div>
+                </div>
+                <div class="formula-actions">
+                  <select class="move-select" onchange="moveFormulaToArea('${f.id}', '${area.id}', this.value)">
+                    ${moveOptionsHtml}
+                  </select>
+                  <button class="btn btn-action btn-del" onclick="deleteFormulaFromArea('${area.id}', '${f.id}')">删除</button>
+                </div>
+              </div>
+            `;
+          });
+        } else {
+          formulasHtml = `<div style="font-size:12px; color:#999; padding:8px 0; text-align:center;">该区暂无公式</div>`;
+        }
+
+        const areaBox = document.createElement('div');
+        areaBox.className = 'cat-box';
+        areaBox.innerHTML = `
+          <div class="cat-header">
+            <span>📁 ${area.name}</span>
+            <button class="btn btn-action btn-del" onclick="deleteArea('${area.id}')">删除分区</button>
+          </div>
+          <div>${formulasHtml}</div>
+          
+          <div style="margin-top:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-size:12px; font-weight:bold; color:#666;">在线分组统计输出结果：</span>
+              <button class="btn-copy-area" onclick="copySingleAreaResult('${area.id}', this)">📋 复制该区</button>
+            </div>
+            <div class="stat-result-box" id="areaResultBox_${area.id}">尚未运行统计，点击右上角“运行在线统计”...</div>
+          </div>
+        `;
+        container.appendChild(areaBox);
+      });
+
+      renderSavedFormulas();
+    }
+
+    function addNewArea() {
+      const nameInput = document.getElementById('areaNameInput');
+      const val = nameInput.value.trim();
+      if (!val) return showToast("⚠️ 请输入分区名称");
+
+      customAreas.push({
+        id: 'area_' + Date.now(),
+        name: val,
+        formulas: []
+      });
+      nameInput.value = '';
+      saveCustomAreas();
+      renderCustomAreas();
+      showToast("已新建公式区");
+    }
+
+    /* 使用自定义弹窗实现绝对可靠的“删除分区”逻辑 */
+    function deleteArea(areaId) {
+      const area = customAreas.find(a => a.id === areaId);
+      if (!area) return;
+
+      let msg = (area.formulas && area.formulas.length > 0) 
+        ? `分区 [${area.name}] 下含有 ${area.formulas.length} 个公式，确认要连同公式一并删除吗？`
+        : `确认要删除分区 [${area.name}] 吗？`;
+
+      openConfirmModal("删除分区", msg, function() {
+        customAreas = customAreas.filter(a => a.id !== areaId);
+        saveCustomAreas();
+        renderCustomAreas();
+        showToast("已删除分区");
+      });
+    }
+
+    /* 使用自定义弹窗实现绝对可靠的“删除单条公式”逻辑 */
+    function deleteFormulaFromArea(areaId, formulaId) {
+      const area = customAreas.find(a => a.id === areaId);
+      if (area) {
+        const formula = area.formulas.find(f => f.id === formulaId);
+        const formulaName = formula ? formula.name : '该项';
+
+        openConfirmModal("删除公式", `确认要删除公式 [${formulaName}] 吗？`, function() {
+          area.formulas = area.formulas.filter(f => f.id !== formulaId);
+          saveCustomAreas();
+          renderCustomAreas();
+          showToast("已删除该公式");
+        });
+      }
+    }
+
+    function addFormulaToArea() {
+      const targetAreaId = document.getElementById('targetAreaSelect').value;
+      const fName = document.getElementById('formulaNameInput').value.trim();
+      const fKillType = document.getElementById('areaKillType').value;
+      const fOrderType = document.getElementById('areaOrderType').value;
+      const fExpr = document.getElementById('formulaExprInput').value.trim();
+
+      if (!targetAreaId) return showToast("⚠️ 请先创建分区");
+      if (!fName) return showToast("⚠️ 请输入公式别名");
+      if (!fExpr) return showToast("⚠️ 请输入公式表达式");
+
+      const targetArea = customAreas.find(a => a.id === targetAreaId);
+      if (targetArea) {
+        if (!targetArea.formulas) targetArea.formulas = [];
+        targetArea.formulas.push({
+          id: 'f_' + Date.now(),
+          name: fName,
+          killType: fKillType,
+          orderType: fOrderType,
+          expr: fExpr
+        });
+
+        document.getElementById('formulaNameInput').value = '';
+        document.getElementById('formulaExprInput').value = '';
+
+        saveCustomAreas();
+        renderCustomAreas();
+        showToast("公式已添加至该区");
+      }
+    }
+
+    function moveFormulaToArea(formulaId, sourceAreaId, targetAreaId) {
+      if (!targetAreaId || sourceAreaId === targetAreaId) return;
+      const sourceArea = customAreas.find(a => a.id === sourceAreaId);
+      const targetArea = customAreas.find(a => a.id === targetAreaId);
+
+      if (sourceArea && targetArea) {
+        const idx = sourceArea.formulas.findIndex(f => f.id === formulaId);
+        if (idx !== -1) {
+          const [movedItem] = sourceArea.formulas.splice(idx, 1);
+          if (!targetArea.formulas) targetArea.formulas = [];
+          targetArea.formulas.push(movedItem);
+
+          saveCustomAreas();
+          renderCustomAreas();
+          showToast(`已将公式移动到 [${targetArea.name}]`);
+        }
+      }
+    }
+
+    function runCustomAreasAnalysis() {
+      const mappings = getMappings();
+      const rawText = document.getElementById('historyData').value;
+      const dataL = parseData(rawText, false, mappings);
+      const dataD = parseData(rawText, true, mappings);
+
+      if (dataL.length < 2) return showToast("⚠️ 历史开奖数据不足2期");
+
+      customAreas.forEach(area => {
+        const boxEl = document.getElementById(`areaResultBox_${area.id}`);
+        if (!boxEl) return;
+
+        let areaOutputText = `【${area.name}】在线统计结果：\n`;
+
+        if (!area.formulas || area.formulas.length === 0) {
+          areaOutputText += `（该区暂无公式）`;
+          boxEl.textContent = areaOutputText;
+          return;
+        }
+
+        let areaTargetCounts = {};
+
+        area.formulas.forEach(f => {
+          let targetData = f.orderType === 'D' ? dataD : dataL;
+          let res = evalFormulaInClient(f.expr, targetData, f.killType, mappings);
+
+          if (res && res.lastPrediction) {
+            areaTargetCounts[res.lastPrediction] = (areaTargetCounts[res.lastPrediction] || 0) + 1;
+          }
+        });
+
+        if (Object.keys(areaTargetCounts).length === 0) {
+          areaOutputText += `（区内公式均无有效预测结果）`;
+          boxEl.textContent = areaOutputText;
+          return;
+        }
+
+        let freqGroup = {};
+        Object.keys(areaTargetCounts).forEach(itemKey => {
+          let cnt = areaTargetCounts[itemKey];
+          if (!freqGroup[cnt]) freqGroup[cnt] = [];
+          freqGroup[cnt].push(itemKey);
+        });
+
+        let lineArr = [];
+        Object.keys(freqGroup).sort((a,b) => Number(a) - Number(b)).forEach(cnt => {
+          let items = freqGroup[cnt];
+          let itemsStr = items.join('、');
+          let total = items.length;
+          lineArr.push(`〖${cnt}次〗：${itemsStr}，(共${total}个)`);
+        });
+
+        areaOutputText += lineArr.join('\n');
+        boxEl.textContent = areaOutputText;
+      });
+
+      showToast("📊 各公式区独立统计完毕！");
+    }
+
+    function copySingleAreaResult(areaId, btnEl) {
+      const boxEl = document.getElementById(`areaResultBox_${areaId}`);
+      if (!boxEl) return;
+
+      const text = boxEl.textContent;
+      if (!text || text.includes('尚未运行统计')) {
+        showToast("⚠️ 暂无有效统计结果，请先运行在线统计");
+        return;
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showCopySuccess(btnEl);
+        }).catch(() => {
+          fallbackCopyText(text, btnEl);
+        });
+      } else {
+        fallbackCopyText(text, btnEl);
+      }
+    }
+
+    function fallbackCopyText(text, btnEl) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showCopySuccess(btnEl);
+      } catch (err) {
+        showToast("⚠️ 复制失败，请手动选择复制");
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function showCopySuccess(btnEl) {
+      const oldText = btnEl.innerText;
+      btnEl.innerText = "✓ 已复制";
+      btnEl.classList.add("copied");
+      setTimeout(() => {
+        btnEl.innerText = oldText;
+        btnEl.classList.remove("copied");
+      }, 1500);
+      showToast("已成功复制该区统计结果！");
+    }
+  </script>
+</body>
+</html>
